@@ -1,0 +1,15 @@
+# An example for creating a Ubuntu container and install python
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+
+    - name: Delete k3s cluster
+      community.general.lxd_container:
+        name: "{{ item }}"
+        state: absent
+        timeout: 600
+      loop:
+        - apiserver3
+        - apiserver2
+        - apiserver1
