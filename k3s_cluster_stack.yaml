@@ -114,7 +114,7 @@
         msg: "IP: {{ master_ip }} Token: {{ token }}"
 
     - name: Install k3s
-      raw: "curl -sfL https://get.k3s.io | K3S_TOKEN={{ toekn }} INSTALL_K3S_CHANNEL=latest INSTALL_K3S_SKIP_START=true sh -s - --server https://{{ master_ip }}:6443 --snapshotter=native"
+      raw: "curl -sfL https://get.k3s.io | K3S_TOKEN={{ token }} INSTALL_K3S_CHANNEL=latest INSTALL_K3S_SKIP_START=true sh -s - --server https://{{ master_ip }}:6443 --snapshotter=native"
 
     - name: Wait till k3s.service file exists
       wait_for:
