@@ -1,31 +1,31 @@
-apiserver1
-apiserver2
-apiserver3
-worker1
-worker2
-worker3
+m1
+m2
+m3
+w1
+w2
+w3
 master
 node1
 node2
 lb1
 lb2
 
-[apiservers]
-apiserver1
-apiserver2
-apiserver3
+[api]
+m1
+m2
+m3
 
-[apiserver_peers]
-apiserver2
-apiserver3
+[api_peers]
+m2
+m3
 
 [workers]
-worker1
-worker2
-worker3
+w1
+w2
+w3
 
 [k3sCluster_stack:children]
-apiservers
+api
 workers
 
 [masters]

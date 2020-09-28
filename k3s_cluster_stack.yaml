@@ -19,15 +19,14 @@
         wait_for_ipv4_addresses: true
         timeout: 600
       loop:
-        - apiserver1
-        - apiserver2
-        - apiserver3
+        - m1
+        - m2
+        - m3
 
 - name: Prepare k3s cluster containers
-  hosts: apiservers
+  hosts: api
   connection: lxd
   gather_facts: false
-  become: true
   tasks:
 
     - name: Copy kmsg.conf
@@ -38,8 +37,8 @@
     - name: Make /dev/kmsg link
       raw: /usr/bin/systemd-tmpfiles --create
 
-- name: Install k3s on apiserver1 containers
-  hosts: apiserver1
+- name: Install k3s on m1 container
+  hosts: m1
   connection: lxd
   gather_facts: false
   tasks:
@@ -87,27 +86,27 @@
       retries: 10
       delay: 10
 
-- name: Install k3s on other apiservers containers
-  hosts: apiserver_peers
+- name: Install k3s on other apis containers
+  hosts: api_peers
   connection: lxd
   tasks:
 
     - name: Gather facts
-      delegate_to: apiserver1
+      delegate_to: m1
       setup:
 
     - name: Set IP Fact
       set_fact:
         master_ip: "{{ ansible_default_ipv4.address }}"
 
-    - name: Grap token from apiserver1
-      delegate_to: apiserver1
+    - name: Grap token from m1
+      delegate_to: m1
       raw: cat /var/lib/rancher/k3s/server/node-token
       register: result
 
     - name: Set Token Fact
       set_fact:
-        token: "{{ result.stdout_lines[0].split('::')[1].split(':')[1] }}"
+        token: "{{ result.stdout_lines[0].split(':')[3] }}"
 
     - name: debug
       debug:
@@ -133,9 +132,10 @@
       systemd:
         state: started
         name: k3s
+      throttle: 1
 
 - name: Dsiplay nodes
-  hosts: apiserver1
+  hosts: m1
   connection: lxd
   gather_facts: false
   tasks:

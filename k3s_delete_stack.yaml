@@ -10,6 +10,6 @@
         state: absent
         timeout: 600
       loop:
-        - apiserver3
-        - apiserver2
-        - apiserver1
+        - apiserv3
+        - apiserv2
+        - apiserv1

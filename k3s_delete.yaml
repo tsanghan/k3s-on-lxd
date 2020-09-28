@@ -12,4 +12,4 @@
       loop:
         - node2
         - node1
-        - master1
+        - master
