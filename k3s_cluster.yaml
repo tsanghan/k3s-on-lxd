@@ -12,9 +12,11 @@
         source:
           type: image
           mode: pull
-          server: https://cloud-images.ubuntu.com/releases
+          # server: https://cloud-images.ubuntu.com/releases
+          server: https://images.linuxcontainers.org
           protocol: simplestreams # if you get a 404, try setting protocol: simplestreams
-          alias: focal
+          # alias: focal
+          alias: ubuntu/focal/cloud
         profiles: ["k3s"]
         wait_for_ipv4_addresses: true
         timeout: 600
@@ -36,6 +38,11 @@
 
     - name: Make /dev/kmsg link
       raw: /usr/bin/systemd-tmpfiles --create
+
+    - name: Install Curl
+      apt:
+        name: curl
+        state: present
 
 - name: Install k3s on master containers
   hosts: master
