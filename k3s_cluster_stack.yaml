@@ -150,7 +150,7 @@
     - name: Display get nodes
       raw: /usr/local/bin/kubectl get nodes
       register: result
-      until: resutl.stdout.find('NotReady') == 1 and result.stdout.find('m3') != -1
+      until: result.stdout.find('NotReady') == -1 and result.stdout.find('m3') != -1
 
     - name: debug
       debug:

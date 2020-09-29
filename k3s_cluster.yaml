@@ -149,6 +149,7 @@
     - name: Display get nodes
       raw: /usr/local/bin/kubectl get nodes
       register: result
+      until: result.stdout.find('NotReady') == -1 and result.stdout.find('node2') != -1
 
     - name: debug
       debug:

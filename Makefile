@@ -1,13 +1,15 @@
+prep: collections profile
+
 collections:
 	ansible-galaxy install -r requirements.yaml
 
 profile:
 	ansible-playbook k3s_profile.yaml
 
-single: profile collections
+single: collections profile
 	ansible-playbook k3s_cluster.yaml
 
-stack: profile collections
+stack: collections profile
 	ansible-playbook k3s_cluster_stack.yaml
 
 clean:
