@@ -2,7 +2,7 @@
 - hosts: localhost
   connection: local
   tasks:
-    - name: Create a k3s krofile
+    - name: Create a k3s profile
       community.general.lxd_profile:
         name: k3s
         state: present
