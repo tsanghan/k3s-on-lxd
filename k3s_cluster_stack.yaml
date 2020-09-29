@@ -59,11 +59,11 @@
 
     - name: Set Fact
       set_fact:
-        token: "{{ result.content }}"
+        token: "{{ result.content | replace('-', '') }}"
 
     - name: debug
       debug:
-        msg: "Token: {{ result.content }}"
+        msg: "Token: {{ token }}"
 
     - name: Install k3s
       raw: curl -sfL https://get.k3s.io | K3S_TOKEN={{ token }} INSTALL_K3S_CHANNEL=latest INSTALL_K3S_SKIP_START=true sh -s - --cluster-init --snapshotter=native
@@ -147,13 +147,10 @@
   gather_facts: false
   tasks:
 
-    - name: Pause
-      pause:
-        seconds: 10
-
     - name: Display get nodes
       raw: /usr/local/bin/kubectl get nodes
       register: result
+      until: resutl.stdout.find('NotReady') == 1 and result.stdout.find('m3') != -1
 
     - name: debug
       debug:
