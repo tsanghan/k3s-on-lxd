@@ -46,7 +46,7 @@ Personel use case are for,
 
 ---
 ## Improvement
-1. Fix IP address for **lxc** instances
+1. Fix IP addresses for **lxc** instances
 2. lxc instance base automation with **cloud-Init**
 3. Add 2x LB for **api-services**.
 4. Add multi worker nodes to **k3s-etcd** cluster.
