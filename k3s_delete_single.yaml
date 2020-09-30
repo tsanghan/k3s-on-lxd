@@ -4,12 +4,12 @@
   gather_facts: false
   tasks:
 
-    - name: Delete k3s cluster
+    - name: Delete k3s single
       community.general.lxd_container:
         name: "{{ item }}"
         state: absent
         timeout: 600
       loop:
-        - node2
-        - node1
-        - master
+        - worker2
+        - worker1
+        - primary

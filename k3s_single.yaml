@@ -1,0 +1,216 @@
+# An example for creating a Ubuntu container and install python
+- name: Create k3s cluster containers
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+
+    - name: Create k3s cluster
+      community.general.lxd_container:
+        name: "{{ item }}"
+        state: started
+        source:
+          type: image
+          mode: pull
+          # server: https://cloud-images.ubuntu.com/releases
+          server: https://images.linuxcontainers.org
+          protocol: simplestreams # if you get a 404, try setting protocol: simplestreams
+          # alias: focal
+          alias: ubuntu/focal/cloud
+        profiles: ["k3s"]
+        wait_for_ipv4_addresses: true
+        timeout: 600
+      loop:
+        - primary
+        - worker1
+        - worker2
+
+- name: Prepare k3s cluster containers
+  hosts: k3sCluster
+  connection: lxd
+  gather_facts: false
+  tasks:
+
+    - name: Copy kmsg.conf
+      copy:
+        content: |
+          L /dev/kmsg - - - - /dev/console
+        dest: /etc/tmpfiles.d/kmsg.conf
+
+    - name: Make /dev/kmsg link
+      raw: /usr/bin/systemd-tmpfiles --create
+
+    - name: Install Curl
+      apt:
+        name: curl
+        state: present
+
+- name: Install k3s on primary containers
+  hosts: primary
+  connection: lxd
+  gather_facts: false
+  tasks:
+
+    - name: Install k3s
+      raw: curl -sfL https://get.k3s.io | INSTALL_K3S_CHANNEL=latest INSTALL_K3S_SKIP_START=true sh -s - --snapshotter=native
+
+    - name: Wait till k3s.service file exists
+      wait_for:
+        path: /etc/systemd/system/k3s.service
+
+    - name: Edit k3s.service file
+      lineinfile:
+        path: /etc/systemd/system/k3s.service
+        state: absent
+        regexp: '^ExecStartPre='
+
+    - name: Reload Systemd
+      raw: systemctl daemon-reload
+
+    - name: Start k3s
+      systemd:
+        state: started
+        name: k3s
+
+    - name: Check k3s server start up is completed
+      raw: /usr/local/bin/kubectl get all --all-namespaces
+      register: result
+      until: result.stdout.find("ContainerCreating") == -1 and result.stdout.find("Running") != -1
+      retries: 10
+      delay: 10
+
+- name: Install k3s on worker containers
+  hosts: workers
+  connection: lxd
+  tasks:
+
+    - name: Gather facts
+      delegate_to: primary
+      setup:
+
+    - name: Set IP Fact
+      set_fact:
+        primary_ip: "{{ ansible_default_ipv4.address }}"
+
+    - name: Get Token
+      delegate_to: primary
+      raw: cat /var/lib/rancher/k3s/server/node-token
+      register: result
+
+    - name: Set Token Fact
+      set_fact:
+        token: "{{ result.stdout_lines[0] }}"
+
+    - name: debug
+      debug:
+        msg: "Primary IP: {{ primary_ip }} Token: {{ token }}"
+      run_once: true
+
+    - name: Install k3s
+      raw: "curl -sfL https://get.k3s.io | INSTALL_K3S_CHANNEL=latest K3S_URL=https://{{ primary_ip }}:6443 K3S_TOKEN={{ token }} INSTALL_K3S_SKIP_START=true sh -s - --snapshotter=native"
+
+    - name: Wait till k3s-agent.service file exists
+      wait_for:
+        path: /etc/systemd/system/k3s-agent.service
+
+    - name: Edit k3s-agent.service file
+      lineinfile:
+        path: /etc/systemd/system/k3s-agent.service
+        state: absent
+        regexp: '^ExecStartPre='
+
+    - name: Reload Systemd
+      raw: systemctl daemon-reload
+
+    - name: Start k3s-agent
+      systemd:
+        state: started
+        name: k3s-agent
+
+- name: Set label for worker
+  hosts: primary
+  connection: lxd
+  gather_facts: false
+  tasks:
+
+    - name: Check if nodes have begistered
+      raw: /usr/local/bin/kubectl get nodes
+      register: result
+      until: result.stdout.find('NotReady') == -1 and result.stdout.find('worker1') != -1 and result.stdout.find('worker2') != -1
+      retries: 10
+      delay: 10
+
+    - name: debug
+      debug:
+        msg: "{{ result.stdout_lines }}"
+
+    - name: Label the nodes to worker
+      raw: /usr/local/bin/kubectl label node {{ item }} node-role.kubernetes.io/worker=worker-lable
+      loop:
+        - worker1
+        - worker2
+
+    - name: Display get workers
+      raw: /usr/local/bin/kubectl get nodes
+      register: result
+      until: result.stdout.find('NotReady') == -1
+
+    - name: debug
+      debug:
+        msg: "{{ result.stdout_lines }}"
+
+- name: Deploy ReplicaSet
+  hosts: primary
+  connection: lxd
+  gather_facts: false
+  tasks:
+
+    - name: Copy ReplicaSet to Primary
+      copy:
+        content: |
+          apiVersion: apps/v1
+          kind: ReplicaSet
+          metadata:
+            name: cowfortune
+            labels:
+              app: funbox
+              tier: log
+          spec:
+            # modify replicas according to your case
+            replicas: 2
+            selector:
+              matchLabels:
+                tier: log
+            template:
+              metadata:
+                labels:
+                  tier: log
+              spec:
+                containers:
+                - name: funbox
+                  image: wernight/funbox
+                  command: ["/bin/sh"]
+                  args: ["-c", "while true; do fortune | cowsay; sleep 15;done"]
+        dest: /root/replicaset.yaml
+
+    - name: Deploy ReplicaSet
+      raw: /usr/local/bin/kubectl apply -f /root/replicaset.yaml
+
+    - name: Get ReplicaSet status
+      raw: /usr/local/bin/kubectl get pods
+      register: result
+      until: result.stdout.find('Running') != -1
+      retries: 30
+      delay: 10
+
+    - name: Debug
+      debug:
+        msg: "{{ result.stdout_lines }}"
+
+    - name: Get logs
+      raw: /usr/local/bin/kubectl logs {{ result.stdout_lines[-1].split() | first }}
+      register: logs
+
+    - name: Debug
+      debug:
+        msg: "{{ logs.stdout_lines }}"

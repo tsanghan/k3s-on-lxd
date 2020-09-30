@@ -8,11 +8,11 @@ collections:
 	touch .profile
 
 single: collections .profile
-	ansible-playbook k3s_cluster.yaml
+	ansible-playbook k3s_single.yaml
 
-stack: collections .profile
-	ansible-playbook k3s_cluster_stack.yaml
+etcd: collections .profile
+	ansible-playbook k3s_etcd.yaml
 
 clean:
-	ansible-playbook k3s_delete_stack.yaml
-	ansible-playbook k3s_delete.yaml
+	ansible-playbook k3s_delete_single.yaml
+	ansible-playbook k3s_delete_etcd.yaml

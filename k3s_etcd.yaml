@@ -1,11 +1,11 @@
-# An example for creating a Ubuntu container and install python
+# An example for creating a k3s stack with 3 etcd,master
 - name: Create k3s cluster containers
   hosts: localhost
   connection: local
   gather_facts: false
   tasks:
 
-    - name: Create k3s cluster
+    - name: Create containers
       community.general.lxd_container:
         name: "{{ item }}"
         state: started
@@ -21,37 +21,53 @@
         wait_for_ipv4_addresses: true
         timeout: 600
       loop:
-        - master
-        - node1
-        - node2
+        - p1
+        - p2
+        - p3
 
 - name: Prepare k3s cluster containers
-  hosts: k3sCluster
+  hosts: ps
   connection: lxd
   gather_facts: false
   tasks:
 
     - name: Copy kmsg.conf
       copy:
-        src: files/kmsg.conf
+        content: |
+          L /dev/kmsg - - - - /dev/console
         dest: /etc/tmpfiles.d/kmsg.conf
 
     - name: Make /dev/kmsg link
       raw: /usr/bin/systemd-tmpfiles --create
 
-    - name: Install Curl
+    - name: Install curl
       apt:
         name: curl
         state: present
 
-- name: Install k3s on master containers
-  hosts: master
+- name: Install k3s on p1 container
+  hosts: p1
   connection: lxd
   gather_facts: false
   tasks:
 
+    - name: Get ramdom Token
+      delegate_to: localhost
+      uri:
+        url: http://www.uuidgenerator.net/api/version4
+        return_content: yes
+      register: result
+
+    - name: Set Fact
+      set_fact:
+        token: "{{ result.content | replace('-', '') }}"
+
+    - name: debug
+      debug:
+        msg: "Token: {{ token }}"
+
     - name: Install k3s
-      raw: curl -sfL https://get.k3s.io | INSTALL_K3S_CHANNEL=latest INSTALL_K3S_SKIP_START=true sh -s - --snapshotter=native
+      raw: curl -sfL https://get.k3s.io | K3S_TOKEN={{ token }} INSTALL_K3S_CHANNEL=latest INSTALL_K3S_SKIP_START=true sh -s - --cluster-init --snapshotter=native
 
     - name: Wait till k3s.service file exists
       wait_for:
@@ -78,78 +94,65 @@
       retries: 10
       delay: 10
 
-- name: Install k3s on worker containers
-  hosts: nodes
+- name: Install k3s on other apis containers
+  hosts: p_peers
   connection: lxd
   tasks:
 
     - name: Gather facts
-      delegate_to: master
+      delegate_to: p1
       setup:
 
     - name: Set IP Fact
       set_fact:
         master_ip: "{{ ansible_default_ipv4.address }}"
 
-    - name: Get Token
-      delegate_to: master
+    - name: Grap token from p1
+      delegate_to: p1
       raw: cat /var/lib/rancher/k3s/server/node-token
       register: result
 
     - name: Set Token Fact
       set_fact:
-        token: "{{ result.stdout_lines[0] }}"
+        token: "{{ result.stdout_lines[0].split(':')[3] }}"
 
     - name: debug
       debug:
         msg: "IP: {{ master_ip }} Token: {{ token }}"
+      run_once: true
 
     - name: Install k3s
-      raw: "curl -sfL https://get.k3s.io | INSTALL_K3S_CHANNEL=latest K3S_URL=https://{{ master_ip }}:6443 K3S_TOKEN={{ token }} INSTALL_K3S_SKIP_START=true sh -s - --snapshotter=native"
+      raw: "curl -sfL https://get.k3s.io | K3S_TOKEN={{ token }} INSTALL_K3S_CHANNEL=latest INSTALL_K3S_SKIP_START=true sh -s - --server https://{{ master_ip }}:6443 --snapshotter=native"
 
-    - name: Wait till k3s-agent.service file exists
+    - name: Wait till k3s.service file exists
       wait_for:
-        path: /etc/systemd/system/k3s-agent.service
+        path: /etc/systemd/system/k3s.service
 
-    - name: Edit k3s-agent.service file
+    - name: Edit k3s.service file
       lineinfile:
-        path: /etc/systemd/system/k3s-agent.service
+        path: /etc/systemd/system/k3s.service
         state: absent
         regexp: '^ExecStartPre='
 
     - name: Reload Systemd
       raw: systemctl daemon-reload
 
-    - name: Start k3s-agent
+    - name: Start k3s
       systemd:
         state: started
-        name: k3s-agent
+        name: k3s
+      throttle: 1
 
-- name: Set label for worker
-  hosts: master
+- name: Dsiplay nodes
+  hosts: p1
   connection: lxd
   gather_facts: false
   tasks:
 
-    - name: Check if nodes has registered
-      raw: /usr/local/bin/kubectl get nodes
-      register: result
-      until: result.stdout.find('node1') != -1 and result.stdout.find('node2') != -1
-
-    - name: debug
-      debug:
-        msg: "{{ result.stdout_lines }}"
-
-    - name: Label the nodes to worker
-      raw: /usr/local/bin/kubectl label node {{ item }} node-role.kubernetes.io/worker=worker-lable
-      loop:
-        - node1
-        - node2
-
     - name: Display get nodes
       raw: /usr/local/bin/kubectl get nodes
       register: result
-      until: result.stdout.find('NotReady') == -1 and result.stdout.find('node2') != -1
+      until: result.stdout.find('NotReady') == -1 and result.stdout.find('p3') != -1
 
     - name: debug
       debug:

@@ -4,12 +4,12 @@
   gather_facts: false
   tasks:
 
-    - name: Delete k3s cluster
+    - name: Delete k3s etcd
       community.general.lxd_container:
         name: "{{ item }}"
         state: absent
         timeout: 600
       loop:
-        - m3
-        - m2
-        - m1
+        - p3
+        - p2
+        - p1

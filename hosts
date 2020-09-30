@@ -1,43 +1,43 @@
-m1
-m2
-m3
+p1
+p2
+p3
 w1
 w2
 w3
-master
-node1
-node2
+primary
+worker1
+worker2
 lb1
 lb2
 
-[api]
-m1
-m2
-m3
+[ps]
+p1
+p2
+p3
 
-[api_peers]
-m2
-m3
+[p_peers]
+p2
+p3
 
-[workers]
+[ws]
 w1
 w2
 w3
 
 [k3sCluster_stack:children]
-api
-workers
+ps
+ws
 
-[masters]
-master
+[primaries]
+primary
 
-[nodes]
-node1
-node2
+[workers]
+worker1
+worker2
 
 [k3sCluster:children]
-masters
-nodes
+primaries
+workers
 
 [lbs]
 lb1
