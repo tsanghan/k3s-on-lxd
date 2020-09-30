@@ -199,7 +199,7 @@
     - name: Get ReplicaSet status
       raw: /usr/local/bin/kubectl get pods
       register: result
-      until: result.stdout.find('Running') != -1
+      until: result.stdout.find('Running') != -1 and result.stdout.find('ContainerCreating') == -1
       retries: 30
       delay: 10
 
