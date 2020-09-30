@@ -10,7 +10,7 @@ Personel use case are for,
 
 ---
 
-## Requirements on LXD Host 
+## Requirements on LXD Host
 
 1. A single Ubuntu Focal 20.04 VM
     - 4GB Memory
@@ -32,7 +32,7 @@ Personel use case are for,
 
 ## Start playing
 
-1. If you have limited resources but still want to experiement/learn **kubernetes**, **k3s** is a great options. You can deploy multi-nodes k3s cluster in a single VM.
+1. If you have limited resources but still want to experiement/learn **kubernetes**, **k3s** is a great option. You can deploy multi-nodes k3s cluster in a single VM.
 2. First clone the repository ```$ git clone git@github.com:tsanghan/k3s-on-lxd.git```
 3. Next ```cd k3s-onlxd```
 4. Initalize LXD with the seed file ***preseed.yaml***
