@@ -34,7 +34,7 @@ Personel use case are for,
 
 1. If you have limited resources but still want to experiement/learn **kubernetes**, **k3s** is a great option. You can deploy multi-nodes k3s cluster in a single VM.
 2. First clone the repository ```$ git clone git@github.com:tsanghan/k3s-on-lxd.git```
-3. Next ```cd k3s-onlxd```
+3. Next ```cd k3s-on-lxd```
 4. Initalize LXD with the seed file ***preseed.yaml***
 5. And simpy type ```make single```
 6. I have a ***Makefile*** to save you some typing.
