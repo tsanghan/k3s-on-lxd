@@ -40,8 +40,10 @@ Personel use case are for,
 6. I have a ***Makefile*** to save you some typing.
 7. ```make single``` will start a k3s cluster with 1x Primary and 2x Workers.
 8. ```make single``` will also deploy a ReplicaSet at the end of the play.
+[![asciicast](https://asciinema.org/a/362608.svg)](https://asciinema.org/a/362608))
 9. ```make clean``` to tear down the cluster.
 10. You can also type ```make etcd``` to create 3x Primary using etcd as datastore.
+[![asciicast](https://asciinema.org/a/362619.svg)](https://asciinema.org/a/362619)
 11. Enjoy.
 
 ---
