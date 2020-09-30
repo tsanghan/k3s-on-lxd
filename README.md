@@ -39,6 +39,7 @@ Personel use case are for,
 5. And simpy type ```make single```
 6. I have a ***Makefile*** to save you some typing.
 7. ```make single``` will start a k3s cluster with 1x Primary and 2x Workers.
+```make single``` will also do a ReplicaSet deployment at the end of the play.
 8. ```make clean``` to tear down the cluster.
 9. You can also type ```make etcd``` to create 3x Primary using etcd as datastore.
 10. Enjoy.
