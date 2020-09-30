@@ -1,45 +1,52 @@
-**Edit a file, create a new file, and clone from Bitbucket in under 2 minutes**
+# k3s on LXD
 
-When you're done, you can delete the content in this README and update the file with details for others getting started with your repository.
+**Purpose of this Repository**
 
-*We recommend that you open this README in another tab as you perform the tasks below. You can [watch our video](https://youtu.be/0ocf7u76WSo) for a full demo of all the steps in this tutorial. Open the video in a new tab to avoid leaving Bitbucket.*
-
----
-
-## Edit a file
-
-You’ll start by editing this README file to learn how to edit a file in Bitbucket.
-
-1. Click **Source** on the left side.
-2. Click the README.md link from the list of files.
-3. Click the **Edit** button.
-4. Delete the following text: *Delete this line to make a change to the README from Bitbucket.*
-5. After making your change, click **Commit** and then **Commit** again in the dialog. The commit page will open and you’ll see the change you just made.
-6. Go back to the **Source** page.
+This is a proof of concept that k3s can be installed into **LXD/LXC** containers.
+Personel use case are for,
+1. Self-learning.
+2. Education.
+3. Training labs with resources constrains.
 
 ---
 
-## Create a file
+## Requirements on LXD Host 
 
-Next, you’ll add a new file to this repository.
-
-1. Click the **New file** button at the top of the **Source** page.
-2. Give the file a filename of **contributors.txt**.
-3. Enter your name in the empty file space.
-4. Click **Commit** and then **Commit** again in the dialog.
-5. Go back to the **Source** page.
-
-Before you move on, go ahead and explore the repository. You've already seen the **Source** page, but check out the **Commits**, **Branches**, and **Settings** pages.
-
+1. A single Ubuntu Focal 20.04 VM
+    - 4GB Memory
+    - 8 vCPU
+    - 60GB HD
+2. LXD 4.0.3 installed
+3. Host kernel modules **overlay** and **br_netfilter** loaded.
+4. Ansible installed
+     ```bash
+        $ ansible --version
+        ansible 2.10.1
+        config file = /home/<user>/Projects/k3s-on-lxd/ansible.cfg
+        configured module search path = ['/home/<user>/.ansible/plugins/modules', '/usr/share/ansible/plugins/modules']
+        ansible python module location = /usr/lib/python3/dist-packages/ansible
+        executable location = /usr/bin/ansible
+        python version = 3.8.2 (default, Jul 16 2020, 14:00:26) [GCC 9.3.0]
+5. I am using the latest version of **k3s**, currently at **v1.19.2+k3s1**, with default **containerd** runtime.
 ---
 
-## Clone a repository
+## Start playing
 
-Use these steps to clone from SourceTree, our client for using the repository command-line free. Cloning allows you to work on your files locally. If you don't yet have SourceTree, [download and install first](https://www.sourcetreeapp.com/). If you prefer to clone from the command line, see [Clone a repository](https://confluence.atlassian.com/x/4whODQ).
+1. If you have limited resources but still want to experiement/learn **kubernetes**, **k3s** is a great options. You can deploy multi-nodes k3s cluster in a single VM.
+2. First clone the repository ```$ git clone git@github.com:tsanghan/k3s-on-lxd.git```
+3. Next ```cd k3s-onlxd```
+4. Initalize LXD with the seed file ***preseed.yaml***
+5. And simpy type ```make single```
+6. I have a ***Makefile*** to save you some typing.
+7. ```make single``` will start a k3s cluster with 1x Primary and 2x Workers.
+8. ```make clean``` to tear down the cluster.
+9. You can also type ```make etcd``` to create 3x Primary using etcd as datastore.
+10. Enjoy.
 
-1. You’ll see the clone button under the **Source** heading. Click that button.
-2. Now click **Check out in SourceTree**. You may need to create a SourceTree account or log in.
-3. When you see the **Clone New** dialog in SourceTree, update the destination path and name if you’d like to and then click **Clone**.
-4. Open the directory you just created to see your repository’s files.
-
-Now that you're more familiar with your Bitbucket repository, go ahead and add a new file locally. You can [push your change back to Bitbucket with SourceTree](https://confluence.atlassian.com/x/iqyBMg), or you can [add, commit,](https://confluence.atlassian.com/x/8QhODQ) and [push from the command line](https://confluence.atlassian.com/x/NQ0zDQ).
+---
+## Improvement
+1. Fix IP address for **lxc** instances
+2. lxc instance base automation with **cloud-Init**
+3. Add 2x LB for **api-services**.
+4. Add multi worker nodes to **k3s-etcd** cluster.
+4. Run k8s conformance test.
