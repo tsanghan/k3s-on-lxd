@@ -28,7 +28,7 @@ profiles:
   name: default
 - config:
     limits.cpu: "2"
-    limits.memory: "2GB"
+    limits.memory: "4GB"
     limits.memory.swap: "false"
     security.privileged: "true"
     security.nesting: "true"

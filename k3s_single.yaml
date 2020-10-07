@@ -153,44 +153,41 @@
       debug:
         msg: "{{ result.stdout_lines }}"
 
-- name: Deploy ReplicaSet
+- name: Create a Deployment
   hosts: primary
   connection: lxd
   gather_facts: false
   tasks:
 
-    - name: Copy ReplicaSet to Primary
+    - name: Copy Deployment to Primary
       copy:
         content: |
           apiVersion: apps/v1
-          kind: ReplicaSet
+          kind: Deployment
           metadata:
-            name: cowfortune
+            name: nginx
             labels:
-              app: funbox
-              tier: log
+              app: nginx
           spec:
             # modify replicas according to your case
             replicas: 2
             selector:
               matchLabels:
-                tier: log
+                app: nginx
             template:
               metadata:
                 labels:
-                  tier: log
+                  app: nginx
               spec:
                 containers:
-                - name: funbox
-                  image: wernight/funbox
-                  command: ["/bin/sh"]
-                  args: ["-c", "while true; do fortune | cowsay; sleep 15;done"]
-        dest: /root/replicaset.yaml
+                - name: nginx
+                  image: nginx
+        dest: /root/deployment.yaml
 
-    - name: Deploy ReplicaSet
-      raw: /usr/local/bin/kubectl apply -f /root/replicaset.yaml
+    - name: Create Deployment
+      raw: /usr/local/bin/kubectl apply -f /root/deployment.yaml
 
-    - name: Get ReplicaSet status
+    - name: Get Deployment status
       raw: /usr/local/bin/kubectl get pods
       register: result
       until: result.stdout.find('Running') != -1 and result.stdout.find('ContainerCreating') == -1
