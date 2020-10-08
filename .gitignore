@@ -56,3 +56,5 @@ collections
 
 # Ignore config
 config
+single
+etcd
