@@ -16,4 +16,3 @@ etcd: collections .profile
 clean:
         ansible-playbook k3s_delete_single.yaml
         ansible-playbook k3s_delete_etcd.yaml
-
