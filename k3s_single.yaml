@@ -13,12 +13,12 @@
           type: image
           mode: pull
           # server: https://cloud-images.ubuntu.com/releases
-          server: https://images.linuxcontainers.org
+          server:
           protocol: simplestreams # if you get a 404, try setting protocol: simplestreams
           # alias: focal
-          alias: ubuntu/focal/cloud
-        profiles: ["k3s", "default"]
-        wait_for_ipv4_addresses: true
+          alias: focal-cloud
+        profiles: ["k3s"]
+        wait_for_ipv4_addresses: false
         timeout: 600
       loop:
         - primary
