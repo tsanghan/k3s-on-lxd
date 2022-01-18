@@ -1,29 +1,19 @@
-single: collections
-	ansible-playbook k3s_single.yaml
-	touch single
-
-SHELL=/bin/bash
-.ONESHELL:
+prep: collections profile
 
 collections:
-	ansible-galaxy install -r requirements.yaml
+        ansible-galaxy install -r requirements.yaml
 
-etcd: collections
-	ansible-playbook k3s_etcd.yaml
-	touch etcd
+.profile:
+        ansible-playbook k3s_profile.yaml
+        touch .profile
 
-config:
-	lxc file pull primary/etc/rancher/k3s/k3s.yaml config
-	sed -i "s/127.0.0.1/$$(lxc list | grep -A3 primary| grep eth0 | awk '{print $$4}')/" config
+single: collections .profile
+        ansible-playbook k3s_single.yaml
 
-list:
-	lxc list
-
-.PHONY: clean
+etcd: collections .profile
+        ansible-playbook k3s_etcd.yaml
 
 clean:
-	ansible-playbook k3s_delete_single.yaml
-	ansible-playbook k3s_delete_etcd.yaml
-	[ -f config ] && rm config
-	[ -f single ] && rm single
-	[ -f etcd ] && rm etcd
+        ansible-playbook k3s_delete_single.yaml
+        ansible-playbook k3s_delete_etcd.yaml
+
