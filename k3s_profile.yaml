@@ -1,0 +1,26 @@
+# An example for creating a profile
+- hosts: localhost
+  connection: local
+  tasks:
+    - name: Create a k3s profile
+      community.general.lxd_profile:
+        name: k3s
+        state: present
+        config:
+          limits.cpu: "2"
+          limits.memory: "2GB"
+          limits.memory.swap: "false"
+          security.privileged: "true"
+          security.nesting: "true"
+          linux.kernel_modules: xt_conntrack,ip_tables,ip6_tables,netlink_diag,nf_nat,overlay
+          raw.lxc: "lxc.apparmor.profile=unconfined\nlxc.cap.drop= \nlxc.cgroup.devices.allow=a\nlxc.mount.auto=proc:rw sys:rw"
+        description: k3s profile for creating k3s container
+        devices:
+          eth0:
+            name: eth0
+            network: lxdbr0
+            type: nic
+          root:
+            path: /
+            pool: default
+            type: disk
