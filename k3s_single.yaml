@@ -17,7 +17,7 @@
           protocol: simplestreams # if you get a 404, try setting protocol: simplestreams
           # alias: focal
           alias: ubuntu/focal/cloud
-        profiles: ["k3s"]
+        profiles: ["k3s", "default"]
         wait_for_ipv4_addresses: true
         timeout: 600
       loop:
@@ -25,31 +25,18 @@
         - worker1
         - worker2
 
-- name: Prepare k3s cluster containers
-  hosts: k3sCluster
-  connection: lxd
-  gather_facts: false
-  tasks:
-
-    - name: Copy kmsg.conf
-      copy:
-        content: |
-          L /dev/kmsg - - - - /dev/console
-        dest: /etc/tmpfiles.d/kmsg.conf
-
-    - name: Make /dev/kmsg link
-      raw: /usr/bin/systemd-tmpfiles --create
-
-    - name: Install Curl
-      apt:
-        name: curl
-        state: present
-
 - name: Install k3s on primary containers
   hosts: primary
   connection: lxd
   gather_facts: false
   tasks:
+
+    - name: Wait till Cloud-Init is done
+      raw: cloud-init status
+      register: result
+      until: result.stdout.find('done') != -1
+      retries: 10
+      delay: 10
 
     - name: Install k3s
       raw: curl -sfL https://get.k3s.io | INSTALL_K3S_CHANNEL=latest INSTALL_K3S_SKIP_START=true sh -s - --snapshotter=native
@@ -106,6 +93,13 @@
         msg: "Primary IP: {{ primary_ip }} Token: {{ token }}"
       run_once: true
 
+    - name: Wait till Cloud-Init is done
+      raw: cloud-init status
+      register: result
+      until: result.stdout.find('done') != -1
+      retries: 10
+      delay: 10
+
     - name: Install k3s
       raw: "curl -sfL https://get.k3s.io | INSTALL_K3S_CHANNEL=latest K3S_URL=https://{{ primary_ip }}:6443 K3S_TOKEN={{ token }} INSTALL_K3S_SKIP_START=true sh -s - --snapshotter=native"
 
@@ -159,44 +153,41 @@
       debug:
         msg: "{{ result.stdout_lines }}"
 
-- name: Deploy ReplicaSet
+- name: Create a Deployment
   hosts: primary
   connection: lxd
   gather_facts: false
   tasks:
 
-    - name: Copy ReplicaSet to Primary
+    - name: Copy Deployment to Primary
       copy:
         content: |
           apiVersion: apps/v1
-          kind: ReplicaSet
+          kind: Deployment
           metadata:
-            name: cowfortune
+            name: nginx
             labels:
-              app: funbox
-              tier: log
+              app: nginx
           spec:
-            # modify replicas according to your case
+            # modify deployment according to your case
             replicas: 2
             selector:
               matchLabels:
-                tier: log
+                app: nginx
             template:
               metadata:
                 labels:
-                  tier: log
+                  app: nginx
               spec:
                 containers:
-                - name: funbox
-                  image: wernight/funbox
-                  command: ["/bin/sh"]
-                  args: ["-c", "while true; do fortune | cowsay; sleep 15;done"]
-        dest: /root/replicaset.yaml
+                - name: nginx
+                  image: nginx
+        dest: /root/deployment.yaml
 
-    - name: Deploy ReplicaSet
-      raw: /usr/local/bin/kubectl apply -f /root/replicaset.yaml
+    - name: Create Deployment
+      raw: /usr/local/bin/kubectl apply -f /root/deployment.yaml
 
-    - name: Get ReplicaSet status
+    - name: Get Deployment status
       raw: /usr/local/bin/kubectl get pods
       register: result
       until: result.stdout.find('Running') != -1 and result.stdout.find('ContainerCreating') == -1
@@ -207,10 +198,26 @@
       debug:
         msg: "{{ result.stdout_lines }}"
 
-    - name: Get logs
-      raw: /usr/local/bin/kubectl logs {{ result.stdout_lines[-1].split() | first }}
-      register: logs
+    - name: Copy Service to Primary
+      copy:
+        content: |
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: nginx
+            labels:
+              app: nginx
+          spec:
+            # modify service according to your case
+            type: NodePort
+            ports:
+            - port: 80
+              targetPort: 80
+              nodePort: 30080
+            selector:
+              app: nginx
+        dest: /root/service.yaml
 
-    - name: Debug
-      debug:
-        msg: "{{ logs.stdout_lines }}"
+    - name: Create Service
+      raw: /usr/local/bin/kubectl apply -f /root/service.yaml
+

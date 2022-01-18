@@ -22,11 +22,11 @@ Personel use case are for,
      ```bash
         $ ansible --version
         ansible 2.10.1
-        config file = /home/<user>/Projects/k3s-on-lxd/ansible.cfg
-        configured module search path = ['/home/<user>/.ansible/plugins/modules', '/usr/share/ansible/plugins/modules']
-        ansible python module location = /usr/lib/python3/dist-packages/ansible
-        executable location = /usr/bin/ansible
-        python version = 3.8.2 (default, Jul 16 2020, 14:00:26) [GCC 9.3.0]
+        config file = /home/user/Projects/k3s-on-lxd/ansible.cfg
+        configured module search path = ['/home/user/.ansible/plugins/modules', '/usr/share/ansible/plugins/modules']
+        ansible python module location = /home/user/.pyenv/versions/3.8.6/lib/python3.8/site-packages/ansible
+        executable location = /home/user/.pyenv/versions/3.8.6/bin/ansible
+        python version = 3.8.6 (default, Sep 30 2020, 16:07:55) [GCC 9.3.0]
 5. I am using the latest version of **k3s**, currently at **v1.19.2+k3s1**, with default **containerd** runtime.
 ---
 

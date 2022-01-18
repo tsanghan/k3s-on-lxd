@@ -1,28 +1,53 @@
-        config: {}
-        networks:
-        - config:
-            ipv4.address: auto
-            ipv6.address: none
-          description: ""
-          name: lxdbr0
-          type: ""
-        storage_pools:
-        - config:
-            size: 11GB
-          description: ""
-          name: default
-          driver: zfs
-        profiles:
-        - config: {}
-          description: ""
-          devices:
-            eth0:
-              name: eth0
-              network: lxdbr0
-              type: nic
-            root:
-              path: /
-              pool: default
-              type: disk
-          name: default
-        cluster: null
+config: {}
+cluster: null
+networks:
+- config:
+    ipv4.address: auto
+    ipv6.address: none
+  description: ""
+  name: lxdbr0
+  type: ""
+storage_pools:
+- config:
+    size: 11GB
+  description: ""
+  name: default
+  driver: zfs
+profiles:
+- config:
+  description: ""
+  devices:
+    eth0:
+      name: eth0
+      network: lxdbr0
+      type: nic
+    root:
+      path: /
+      pool: default
+      type: disk
+  name: default
+- config:
+    limits.cpu: "2"
+    limits.memory: "4GB"
+    limits.memory.swap: "false"
+    security.privileged: "true"
+    security.nesting: "true"
+    linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay
+    raw.lxc: |
+      lxc.apparmor.profile=unconfined
+      lxc.mount.auto=proc:rw sys:rw
+      lxc.cgroup.devices.allow=a
+      lxc.cap.drop=
+    user.user-data: |
+      #cloud-config
+      package_update: true
+      package_upgrade: true
+      packages:
+        - curl
+  description: k3s profile for creating k3s containers
+  devices:
+    aadisable:
+      path: /dev/kmsg
+      source: /dev/kmsg
+      type: unix-char
+  name: k3s
