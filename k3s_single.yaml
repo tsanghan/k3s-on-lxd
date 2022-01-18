@@ -127,7 +127,7 @@
   gather_facts: false
   tasks:
 
-    - name: Check if nodes have begistered
+    - name: Check if nodes have registered
       raw: /usr/local/bin/kubectl get nodes
       register: result
       until: result.stdout.find('NotReady') == -1 and result.stdout.find('worker1') != -1 and result.stdout.find('worker2') != -1
